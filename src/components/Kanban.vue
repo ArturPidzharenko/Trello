@@ -4,11 +4,13 @@
             <div class="list-group" data-list="0">
                 <h2 class="list-group__name list-group__name--onhold">ON-HOLD</h2>
                 <div class="list-group__block" >
-                    <div data-list="0" data v-for="(item, index) in listOne" :key="item.id" @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group-item list-group-item-action list-group__item">
+                    <div data-list="0" data v-for="(item, index) in listOne" :key="item.id"  class="list-group-item list-group-item-action list-group__item">
                         <div class="form-group">
                             <textarea class="form-control form-group__textarea"></textarea>
                         </div>
-                        <button @click="deleteItemListOne(index)" class="form-group__button form-group__button--close">+</button>                   
+                        <button @click="deleteItemListOne(index)" class="form-group__button form-group__button--close">+</button> 
+                        <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__top"></div>
+                        <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__bottom"></div>                  
                     </div>
                 </div>
                 <button @click="addItemListOne" class="form-group__button form-group__button--addition"><span>+</span> Добавить задачу</button> 
@@ -18,11 +20,13 @@
             <div class="list-group" data-list="1">
                 <h2 class="list-group__name list-group__name--inprogress">IN-PROGRESS</h2>
                 <div class="list-group__block">
-                    <div data-list="1" v-for="(item, index) in listTwo" :key="item.id" @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group-item list-group-item-action list-group__item">
+                    <div data-list="1" v-for="(item, index) in listTwo" :key="item.id" class="list-group-item list-group-item-action list-group__item">
                         <div class="form-group">
                             <textarea class="form-control form-group__textarea" ></textarea>
                         </div>
-                        <button @click="deleteItemListTwo(index)" class="form-group__button form-group__button--close">+</button>                   
+                        <button @click="deleteItemListTwo(index)" class="form-group__button form-group__button--close" onselectstart="return false">+</button>     
+                        <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__top"></div>
+                        <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__bottom"></div>                 
                     </div>
                 </div>
                 <button @click="addItemListTwo" class="form-group__button form-group__button--addition"><span>+</span> Добавить задачу</button> 
@@ -36,10 +40,12 @@
                             <div class="form-group">
                                 <textarea class="form-control form-group__textarea"></textarea>
                             </div>
-                            <button class="form-group__button form-group__button--close">+</button>                   
+                            <button class="form-group__button form-group__button--close" >+</button>                   
                         </div>
                     </div>
-                    <button class="form-group__button form-group__button--addition"><span>+</span> Добавить задачу</button> 
+                    <button class="form-group__button form-group__button--addition"><span>+</span> Добавить задачу</button>
+                    <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__top"></div>
+                    <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__bottom"></div>  
                 </div>
             </div>
             <div class="col- col-sm-12 col-md-3 col-lg-3 col-xl-3 taskbar__list">
@@ -53,7 +59,9 @@
                             <button class="form-group__button form-group__button--close">+</button>                   
                         </div>
                     </div>
-                    <button @mouseenter="ghfsd" class="form-group__button form-group__button--addition"><span>+</span> Добавить задачу</button> 
+                    <button class="form-group__button form-group__button--addition"><span>+</span> Добавить задачу</button>
+                    <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__top"></div>
+                    <div @mousedown="dragAndDropItem($event, index)" @touchstart="dragAndDropItem($event, index)" class="list-group__bottom"></div> 
                 </div>
             </div>
         </div>    
@@ -89,9 +97,6 @@
                
             ]),
 
-            ghfsd(e) {
-            },
-            
             addItemListOne (e) {
                 this.id++;
                 this.listOne.push({id:this.id});
@@ -111,15 +116,15 @@
             },
 
             dragAndDropItem (e, index) {
-                let block, widthBlock, item, element;
+                let block, widthBlock, item, element, top, bottom;
 
-                block      = e.target.parentNode.parentNode;
+                block      = e.target.parentNode;
                 widthBlock = block.offsetWidth;
-
+                
                 if (e.which == 3 || !block.classList.contains('list-group__item')) {
                     return;
                 }
-               
+                    
                 let findDroppable = () => {
                     block.hidden = true;
                     element      = document.elementFromPoint(event.clientX || e.targetTouches[0].pageX, event.clientY || e.targetTouches[0].pageY);
@@ -136,6 +141,10 @@
                 }
 
                 let move = (e) => {
+                    if (e.type === "mousemove") {
+                        e.preventDefault();
+                    }
+
                     document.body.appendChild(block);
                     block.style.width    = widthBlock + "px";
                     block.style.padding  = "20px";
@@ -152,14 +161,14 @@
                     document.removeEventListener("touchmove", move);
                     document.removeEventListener("mouseup", stop);
                     document.removeEventListener("touchcend", stop);
+
+                    let lists, numberList, numberListDraggedItem, isTop, isBottom;
+                        
+                    lists                 = [this.listOne, this.listTwo, this.listThree, this.listFour];
+                    numberList            = element.parentNode.getAttribute("data-list");
+                    numberListDraggedItem = block.getAttribute("data-list");
                     
                     if (element.parentNode.classList.contains('list-group')) {
-                        let lists, numberList, numberListDraggedItem;
-                        
-                        lists                 = [this.listOne, this.listTwo, this.listThree, this.listFour];
-                        numberList            = element.parentNode.getAttribute("data-list");
-                        numberListDraggedItem = block.getAttribute("data-list");
-                        
                         if (element.classList.contains('form-group__button')) {
                             lists[numberList].push(lists[numberListDraggedItem][index]);
                             lists[numberListDraggedItem].splice(index, 1)
@@ -172,9 +181,30 @@
                         
                         console.log(this.listOne);
                         console.log(this.listTwo);
-                    
-
                         
+                    }
+
+                    isTop = element.classList.contains('list-group__top');
+                    isBottom = element.classList.contains('list-group__bottom');
+
+                    if (isTop || isBottom) {
+                        let nodes, parent, children, childrenIndex;
+
+                        parent        = element.parentNode.parentNode;
+                        children      = parent.children;
+                        nodes         = Array.prototype.slice.call(children),
+                        childrenIndex = nodes.indexOf(element.parentNode);
+
+                        if (isBottom) {
+                            childrenIndex += 1; 
+                        }
+
+                        lists[numberList].splice(childrenIndex, 0, lists[numberListDraggedItem][index]);
+                        lists[numberListDraggedItem].splice(index, 1);
+
+                        console.log(this.listOne);
+                        console.log(this.listTwo);; 
+
                     }
                 }
 
@@ -199,6 +229,29 @@
         margin-bottom: 40px;
         height: 90vh;
     }
+
+    .list-group__top {
+        background: transparent;
+        width: 100%;
+        height: 50%;
+        position: absolute;
+        top: 0;
+        left: -18px;
+    }
+
+    .list-group__bottom {
+        background: transparent;
+        width: 100%;
+        height: 50%;
+        position: absolute;
+        bottom: 0;
+        left: -18px;
+    }
+
+    .list-group__top--noactive, .list-group__bottom--noactive {
+        display: none;
+    }
+
     .list-group__block {
         overflow-x: hidden;
         overflow-y: auto;
